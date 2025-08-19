@@ -1,8 +1,8 @@
-import { PrivateKey, TokenCreateTransaction, TokenSupplyType, TokenType } from "@hashgraph/sdk";
-import environmentSetup from "@/lib/setup";
 import pLimit from 'p-limit';
 import axios from 'axios';
 import { NextResponse } from "next/server";
+import Product from '@/model/Product';
+import { dbConnect } from '@/lib/connection';
 
 const limit = pLimit(10);
 let errorQRs = [];
@@ -137,13 +137,7 @@ async function processBatches(productData, manufacturerName, tokenId, supplyKey)
 
 export async function POST(req) {
     try {
-        const myPrivateKey = process.env.PRIVATE_KEY;
-        const myAccountId = process.env.ACCOUNT_ID;
-
-        const client = await environmentSetup();
-
-        const newPrivateKey = PrivateKey.generate();
-        const newPublicKey = newPrivateKey.publicKey;
+        await dbConnect();
 
         const {
             productName,
@@ -152,29 +146,9 @@ export async function POST(req) {
             productPrice,
             batchNo,
             endSerialNumber,
-            startSerial
+            startSerial,
+            manufacturerName
         } = await req.json()
-
-        const supplyKey = PrivateKey.generate();
-        const nftCreate = await new TokenCreateTransaction()
-                                        .setTokenName(productName)
-                                        .setTokenSymbol(`H${productName.toUpperCase()}`)
-                                        .setTokenType(TokenType.NonFungibleUnique)
-                                        .setDecimals(0)
-                                        .setInitialSupply(0)
-                                        .setTreasuryAccountId(myAccountId)
-                                        .setSupplyType(TokenSupplyType.Infinite)
-                                        .setSupplyKey(supplyKey)
-                                        .freezeWith(client);
-
-        console.log(`-Supply Key: ${supplyKey} /n`);
-
-        const nftCreateTxSign = await nftCreate.sign(PrivateKey.fromString(myPrivateKey));
-        const nftCreateSubmit = await nftCreateTxSign.execute(client);
-        const nftCreateRx = await nftCreateSubmit.getReceipt(client);
-
-        const tokenId = nftCreateRx.tokenId;
-        console.log("Created NFT with Token ID: " + tokenId);
 
         const unitsCreated = endSerialNumber - startSerial;
         const productData = {
@@ -187,7 +161,17 @@ export async function POST(req) {
             startSerial
         };
 
-        const results = await processBatches(productData, 'keith', tokenId.toString(), supplyKey.toStringDer());
+        const productDetails = await Product.findOne({
+            name: productName
+        });
+        console.log(productDetails)
+
+        if (!productDetails) {
+            console.log('Product not found')
+            return NextResponse.json({ success: false, err: 'Products not found' })
+        }
+
+        const results = await processBatches(productData, manufacturerName, productDetails.tokenId, productDetails.supplyKey);
         return NextResponse.json({ success: true, ipfsHash: results[0].cid, url: results[0].url });
     } catch (error) {
         console.log('Error');

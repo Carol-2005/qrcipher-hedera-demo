@@ -1,8 +1,12 @@
 "use client"
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useParams } from 'next/navigation';
 import { Calendar, Hash, Package, MapPin, DollarSign, Barcode, Scale, User, Database, FileText, Check, Copy, Printer, ExternalLink, AlertCircle } from 'lucide-react';
+import axios from 'axios';
 
 export default function ProductForm() {
+    const productId = useParams()?.productId;
+
     const [formData, setFormData] = useState({
         productName: '',
         batchNumber: '',
@@ -19,6 +23,37 @@ export default function ProductForm() {
     const [error, setError] = useState(null);
     const [ipfsHash, setIpfsHash] = useState(null);
     const [txnHash, setTxnHash] = useState(null);
+
+    useEffect(() => {
+
+        const fetchProductDetails = async () => {
+            try {
+                const response = await axios.get(`/api/product/fetchProduct?productId=${productId}`);
+                const result = await response.data;
+
+                if (!result.success) {
+                    throw new Error('Failed to fetch');
+                }
+
+                setFormData({
+                    productName: result.productName,
+                    batchNumber: '',
+                    location: result.location,
+                    date: new Date().toISOString().split('T')[0],
+                    price: result.price,
+                    startSerialNumber: '',
+                    endSerialNumber: '',
+                    manufacturerName: ''
+                });
+
+            } catch (err) {
+                console.log(err);
+                setError('Could not find the product');
+            }
+        }
+
+        if (productId) fetchProductDetails();
+    }, [productId])
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -46,7 +81,8 @@ export default function ProductForm() {
                     productPrice: formData.price,
                     batchNo: formData.batchNumber,
                     endSerialNumber: formData.endSerialNumber,
-                    startSerial: formData.startSerialNumber
+                    startSerial: formData.startSerialNumber,
+                    manufacturerName: formData.manufacturerName
                 }),
             });
             

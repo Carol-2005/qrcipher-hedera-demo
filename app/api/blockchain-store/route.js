@@ -30,7 +30,6 @@ export async function POST(req) {
             console.log("Created NFT " + tokenId + " with serial number: " + mintRx.serials);
             serialNumbers.push(...mintRx.serials.map(s => s.toString()));
         }
-
         
         return NextResponse.json({ success: true, serialNumbers: serialNumbers });
     } catch (err) {
