@@ -5,10 +5,10 @@ import environmentSetup from "@/lib/setup";
 
 async function storeDataInIpfs(data) {
     try {
-            const ipfsResponse = await fetch('http://localhost:3000/api/ipfs-store', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data),
+        const ipfsResponse = await fetch('http://localhost:3000/api/ipfs-store', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data),
         });
         //console.log("The ipfs response is",ipfsResponse);
         

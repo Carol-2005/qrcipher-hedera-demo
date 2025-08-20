@@ -3,6 +3,7 @@ pragma solidity ^0.8.17;
 
 contract ProductManager {
     address owner;
+
     constructor () {
         owner = msg.sender;
     }
@@ -18,6 +19,8 @@ contract ProductManager {
 
     mapping (string => ProductData) private productHashTable;
 
+    event ProductStored(string ipfsCid, address indexed accountAddress, uint256 timestamp);
+
     function storeProduct(
         string[] calldata _ipfsCids,
         address _address
@@ -26,12 +29,14 @@ contract ProductManager {
         
         for (uint i = 0; i < _ipfsCids.length; i++) {
             ProductData storage unit = productHashTable[_ipfsCids[i]];
+            uint timestamp = block.timestamp;
             unit.associatedAccounts.push(
                 AssociatedAccountT({
                     accountAddress: _address,
-                    timestamp: block.timestamp
+                    timestamp: timestamp
                 })
             );
+            emit ProductStored(_ipfsCids[i], _address, timestamp);
         }
     }
 

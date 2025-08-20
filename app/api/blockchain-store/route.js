@@ -1,34 +1,80 @@
 import { NextResponse } from "next/server";
-import { Hbar, TokenMintTransaction, PrivateKey, TokenId } from "@hashgraph/sdk";
+import { 
+    Hbar, TokenMintTransaction, PrivateKey, TokenId, 
+    AccountCreateTransaction, ContractFunctionParameters, ContractExecuteTransaction 
+} from "@hashgraph/sdk";
 import environmentSetup from "@/lib/setup";
 
+async function mintTokens(client, supplyKeyStr, tokenIdStr, metadataArray) {
+    let serialNumbers = [];
+    const supplyKey = PrivateKey.fromStringDer(supplyKeyStr);
+    const tokenId = TokenId.fromString(tokenIdStr);
+
+    const maxTransactionFee = new Hbar(20);
+        
+    for (let i = 0; i < metadataArray.length; i += 10) {
+        const segment = metadataArray.slice(i, i + 10);
+        const CID = segment.map(c => Buffer.from(c));
+
+        const mintTx = new TokenMintTransaction()
+            .setTokenId(tokenId)
+            .setMetadata(CID)
+            .setMaxTransactionFee(maxTransactionFee)
+            .freezeWith(client);
+
+        const mintTxSign = await mintTx.sign(supplyKey);
+        const mintTxSubmit = await mintTxSign.execute(client);
+        const mintRx = await mintTxSubmit.getReceipt(client);
+
+        console.log("Created NFT " + tokenId + " with serial number: " + mintRx.serials);
+        serialNumbers.push(...mintRx.serials.map(s => s.toString()));
+    }
+
+    return serialNumbers
+}
+
+async function storeViaContract(client, metadataArray) {
+    const newPrivateKey = await PrivateKey.generateECDSA();
+    const newPublicKey = await newPrivateKey.publicKey;
+
+    const transaction = new AccountCreateTransaction()
+        .setECDSAKeyWithAlias(newPublicKey)
+        .setInitialBalance(new Hbar(50));
+
+    const txResponse = await transaction.execute(client);
+    const receipt = await txResponse.getReceipt(client);
+    const newAccountId = receipt.accountId;
+    const evmAddress = `0x${newPublicKey.toEvmAddress()}`;
+
+    console.log(`\nHedera Account created: ${newAccountId}`);
+    console.log(`EVM Address: ${evmAddress}`);
+
+    const storeProducts = new ContractExecuteTransaction()
+        .setContractId('0.0.6609860')
+        .setGas(4000000)
+        .setFunction("storeProduct",
+            new ContractFunctionParameters()
+                .addStringArray(metadataArray)
+                .addAddress(evmAddress)
+            );
+    const storeProductsTx = await storeProducts.execute(client);
+    const storeProductsRx = await storeProductsTx.getRecord(client);
+    console.log("Contract execution record:", storeProductsRx);
+
+    return [];
+}
+
 export async function POST(req) {
+    let serialNumbers = [];
+
     try {
-        let serialNumbers = []
-        const { supplyKeyStr, tokenIdStr, metadataArray } = await req.json();
+        const { supplyKeyStr, tokenIdStr, metadataArray, tokenBasedFlag } = await req.json();
         const client = await environmentSetup();
 
-        const supplyKey = PrivateKey.fromStringDer(supplyKeyStr);
-        const tokenId = TokenId.fromString(tokenIdStr);
-
-        const maxTransactionFee = new Hbar(20);
-            
-        for (let i = 0; i < metadataArray.length; i += 10) {
-            const segment = metadataArray.slice(i, i + 10);
-            const CID = segment.map(c => Buffer.from(c));
-
-            const mintTx = new TokenMintTransaction()
-                .setTokenId(tokenId)
-                .setMetadata(CID)
-                .setMaxTransactionFee(maxTransactionFee)
-                .freezeWith(client);
-
-            const mintTxSign = await mintTx.sign(supplyKey);
-            const mintTxSubmit = await mintTxSign.execute(client);
-            const mintRx = await mintTxSubmit.getReceipt(client);
-
-            console.log("Created NFT " + tokenId + " with serial number: " + mintRx.serials);
-            serialNumbers.push(...mintRx.serials.map(s => s.toString()));
+        if (tokenBasedFlag) {
+            serialNumbers = await mintTokens(client, supplyKeyStr, tokenIdStr, metadataArray);
+        } else {
+            serialNumbers = await storeViaContract(client, metadataArray);
         }
         
         return NextResponse.json({ success: true, serialNumbers: serialNumbers });
