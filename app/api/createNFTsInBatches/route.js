@@ -42,12 +42,13 @@ async function storeDataInIpfs(data) {
     }
 }
 
-async function storeHashOnBlockchain(ipfsHashArray, tokenId, supplyKey) {
+async function storeHashOnBlockchain(ipfsHashArray, tokenId, supplyKey, tokenBasedFlag) {
     try {
         const chainResponse = await axios.post('http://localhost:3000/api/blockchain-store', {
                 tokenIdStr: tokenId,
                 supplyKeyStr: supplyKey,
-                metadataArray: ipfsHashArray
+                metadataArray: ipfsHashArray,
+                tokenBasedFlag: tokenBasedFlag
             }, {
                 timeout: 18000000
         });
@@ -67,7 +68,7 @@ async function storeHashOnBlockchain(ipfsHashArray, tokenId, supplyKey) {
     }
 }
 
-async function processBatches(productData, manufacturerName, tokenId, supplyKey) {
+async function processBatches(productData, manufacturerName, tokenId, supplyKey, tokenBasedFlag) {
     console.log("The processBatches function is hit");
 
     const {
@@ -126,7 +127,7 @@ async function processBatches(productData, manufacturerName, tokenId, supplyKey)
         await sleep(300);
     }
 
-    const response = await storeHashOnBlockchain(metadataArray, tokenId, supplyKey);
+    const response = await storeHashOnBlockchain(metadataArray, tokenId, supplyKey, tokenBasedFlag);
 
     if (!response.success) {
         console.log('Error while minting');
@@ -147,7 +148,8 @@ export async function POST(req) {
             batchNo,
             endSerialNumber,
             startSerial,
-            manufacturerName
+            manufacturerName,
+            tokenBasedFlag
         } = await req.json()
 
         const unitsCreated = endSerialNumber - startSerial;
@@ -171,7 +173,8 @@ export async function POST(req) {
             return NextResponse.json({ success: false, err: 'Products not found' })
         }
 
-        const results = await processBatches(productData, manufacturerName, productDetails.tokenId, productDetails.supplyKey);
+        const results = await processBatches(productData, manufacturerName, productDetails.tokenId, 
+                                            productDetails.supplyKey, tokenBasedFlag);
         return NextResponse.json({ success: true, ipfsHash: results[0].cid, url: results[0].url });
     } catch (error) {
         console.log('Error');

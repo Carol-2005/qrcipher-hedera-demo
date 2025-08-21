@@ -49,17 +49,22 @@ async function storeViaContract(client, metadataArray) {
     console.log(`\nHedera Account created: ${newAccountId}`);
     console.log(`EVM Address: ${evmAddress}`);
 
-    const storeProducts = new ContractExecuteTransaction()
-        .setContractId('0.0.6609860')
-        .setGas(4000000)
-        .setFunction("storeProduct",
-            new ContractFunctionParameters()
-                .addStringArray(metadataArray)
-                .addAddress(evmAddress)
-            );
-    const storeProductsTx = await storeProducts.execute(client);
-    const storeProductsRx = await storeProductsTx.getRecord(client);
-    console.log("Contract execution record:", storeProductsRx);
+    for (let i = 0; i < metadataArray.length; i += 10) {
+        const segment = metadataArray.slice(i, i + 10);
+        
+        const storeProducts = new ContractExecuteTransaction()
+            .setContractId('0.0.6609860')
+            .setGas(4000000)
+            .setFunction("storeProduct",
+                new ContractFunctionParameters()
+                    .addStringArray(segment)
+                    .addAddress(evmAddress)
+                );
+
+        const storeProductsTx = await storeProducts.execute(client);
+        const storeProductsRx = await storeProductsTx.getRecord(client);
+        console.log("Contract execution record:", storeProductsRx);
+    }
 
     return [];
 }
@@ -71,11 +76,16 @@ export async function POST(req) {
         const { supplyKeyStr, tokenIdStr, metadataArray, tokenBasedFlag } = await req.json();
         const client = await environmentSetup();
 
+        const start = performance.now();
+
         if (tokenBasedFlag) {
             serialNumbers = await mintTokens(client, supplyKeyStr, tokenIdStr, metadataArray);
         } else {
             serialNumbers = await storeViaContract(client, metadataArray);
         }
+
+        const end = performance.now();
+        console.log(`Time taken to store ${metadataArray.length} units - ${end - start}ms for ${tokenBasedFlag ? 'NFT':'Contracts'}`);
         
         return NextResponse.json({ success: true, serialNumbers: serialNumbers });
     } catch (err) {

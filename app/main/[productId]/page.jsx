@@ -23,6 +23,7 @@ export default function ProductForm() {
     const [error, setError] = useState(null);
     const [ipfsHash, setIpfsHash] = useState(null);
     const [txnHash, setTxnHash] = useState(null);
+    const [tokenBasedFlag, setTokenFlag] = useState(true);
 
     useEffect(() => {
 
@@ -63,6 +64,10 @@ export default function ProductForm() {
         }));
     };
 
+    const handleCheckboxChange = () => {
+        setTokenFlag(!tokenBasedFlag);
+    }
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsLoading(true);
@@ -82,7 +87,8 @@ export default function ProductForm() {
                     batchNo: formData.batchNumber,
                     endSerialNumber: formData.endSerialNumber,
                     startSerial: formData.startSerialNumber,
-                    manufacturerName: formData.manufacturerName
+                    manufacturerName: formData.manufacturerName,
+                    tokenBasedFlag: tokenBasedFlag
                 }),
             });
             
@@ -104,8 +110,8 @@ export default function ProductForm() {
         <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
             <div className="text-center mb-12">
-            <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">Product Registration System</h1>
-            <p className="mt-3 text-xl text-gray-600 max-w-2xl mx-auto">Enter product details to generate secure tracking information</p>
+                <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">Product Registration System</h1>
+                <p className="mt-3 text-xl text-gray-600 max-w-2xl mx-auto">Enter product details to generate secure tracking information</p>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
@@ -118,6 +124,19 @@ export default function ProductForm() {
                 </h2>
                 </div>
                 <div className="px-6 py-6">
+                    <label className='flex cursor-pointer select-none items-center text-black'>
+                        Create via Token: 
+                        <div className='relative'>
+                            <input
+                                type='checkbox'
+                                checked={tokenBasedFlag}
+                                onChange={handleCheckboxChange}
+                                className='sr-only'
+                            />
+                            <div className='block h-8 w-14 rounded-full bg-[#E5E7EB]'></div>
+                            <div className='dot absolute left-1 top-1 h-6 w-6 rounded-full bg-white transition'></div>
+                        </div>
+                    </label>
                 <form onSubmit={handleSubmit}>
                     <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
                     <div className="sm:col-span-2">
@@ -274,29 +293,30 @@ export default function ProductForm() {
                         />
                         </div>
                     </div>
+
                     </div>
 
                     <div className="mt-8">
-                    <button
-                        type="submit"
-                        disabled={isLoading}
-                        className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-md text-base font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-indigo-300 transition-colors duration-200"
-                    >
-                        {isLoading ? (
-                        <div className="flex items-center">
-                            <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                            Processing...
-                        </div>
-                        ) : (
-                        <div className="flex items-center">
-                            <Database className="h-5 w-5 mr-2" />
-                            Generate Product Data
-                        </div>
-                        )}
-                    </button>
+                        <button
+                            type="submit"
+                            disabled={isLoading}
+                            className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-md text-base font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-indigo-300 transition-colors duration-200"
+                        >
+                            {isLoading ? (
+                            <div className="flex items-center">
+                                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                Processing...
+                            </div>
+                            ) : (
+                            <div className="flex items-center">
+                                <Database className="h-5 w-5 mr-2" />
+                                Generate Product Data
+                            </div>
+                            )}
+                        </button>
                     </div>
                 </form>
                 </div>
