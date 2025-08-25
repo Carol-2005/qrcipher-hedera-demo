@@ -39,7 +39,7 @@ async function storeViaContract(client, metadataArray) {
 
     const transaction = new AccountCreateTransaction()
         .setECDSAKeyWithAlias(newPublicKey)
-        .setInitialBalance(new Hbar(50));
+        .setInitialBalance(new Hbar(10));
 
     const txResponse = await transaction.execute(client);
     const receipt = await txResponse.getReceipt(client);
@@ -53,12 +53,11 @@ async function storeViaContract(client, metadataArray) {
         const segment = metadataArray.slice(i, i + 10);
         
         const storeProducts = new ContractExecuteTransaction()
-            .setContractId('0.0.6609860')
-            .setGas(4000000)
-            .setFunction("storeProduct",
+            .setContractId('0.0.6626523')
+            .setGas(270000)
+            .setFunction("addProduct",
                 new ContractFunctionParameters()
                     .addStringArray(segment)
-                    .addAddress(evmAddress)
                 );
 
         const storeProductsTx = await storeProducts.execute(client);

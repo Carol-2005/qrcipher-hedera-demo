@@ -1,65 +1,32 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
 
-contract ProductManager {
-    address owner;
+contract ProductStorage {
+    address private owner;
+    mapping (string => bool) private ipfsCidList;
 
-    constructor () {
+    event ProductAdded(string ipfsCid, uint timestamp);
+
+    modifier OnlyOwner() {
+        require(msg.sender == owner, "Only the owner can call this function");
+        _;
+    }
+
+    constructor() {
         owner = msg.sender;
     }
 
-    struct AssociatedAccountT {
-        address accountAddress;
-        uint256 timestamp;
-    }
-
-    struct ProductData {
-        AssociatedAccountT[] associatedAccounts;
-    }
-
-    mapping (string => ProductData) private productHashTable;
-
-    event ProductStored(string ipfsCid, address indexed accountAddress, uint256 timestamp);
-
-    function storeProduct(
-        string[] calldata _ipfsCids,
-        address _address
-    ) external {
-        require(owner == msg.sender, "Only the contract owner can call this function");
-        
-        for (uint i = 0; i < _ipfsCids.length; i++) {
-            ProductData storage unit = productHashTable[_ipfsCids[i]];
-            uint timestamp = block.timestamp;
-            unit.associatedAccounts.push(
-                AssociatedAccountT({
-                    accountAddress: _address,
-                    timestamp: timestamp
-                })
-            );
-            emit ProductStored(_ipfsCids[i], _address, timestamp);
+    //@notice this function is to store the batches of product cids to be sent to the network
+    //currently the limit is 10
+    function addProduct(string[] calldata _ipfsCids) external OnlyOwner {
+        for (uint i = 0; i < _ipfsCids.length; i++) { 
+            ipfsCidList[_ipfsCids[i]] = true;
+            emit ProductAdded(_ipfsCids[i], block.timestamp);
         }
     }
 
-    function addAssociateAccount(string calldata _ipfsCid, address _address) external returns (bool) {
-        require(owner == msg.sender, "Only the contract owner can call this function");
-        require(productHashTable[_ipfsCid].associatedAccounts.length > 0, "Product not found");
-
-        ProductData storage unit = productHashTable[_ipfsCid];
-        unit.associatedAccounts.push(
-            AssociatedAccountT({
-                accountAddress: _address,
-                timestamp: block.timestamp
-            })
-        );
-
-        return true;
-    }
-
-    function getAssociatedAccounts(string calldata _ipfsCid) external view returns (AssociatedAccountT[] memory) {
-        return productHashTable[_ipfsCid].associatedAccounts;
-    }
-
-    function verifyCID(string calldata _ipfsCid) external view returns (bool) {
-        return productHashTable[_ipfsCid].associatedAccounts.length > 0;
+    //@notice this function is to check if the product cid is present in the network
+    function checkProduct(string calldata _cid) public view returns (bool) {
+        return ipfsCidList[_cid];
     }
 }
