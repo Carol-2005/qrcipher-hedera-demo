@@ -18,22 +18,21 @@ export default function ProductPage() {
       try {
         setLoading(true);
         
-        const res = await fetch('/api/verify_hash', {
+        const res = await fetch('/api/verifyCID', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ ipfsHash: hash }),
         });
 
         if (!res.ok) throw new Error('Verification failed');
-        const { exists } = await res.json();
-        setIsValid(exists);
+        const { success } = await res.json();
+        setIsValid(success);
 
-        if (exists) {
+        if (success) {
           const ipfsResponse = await fetch(`/api/ipfs-url/${hash}`);
           const result = await ipfsResponse.json()
           if (!result.success) throw new Error('Failed to fetch data from IPFS');
-          const dataRes = await fetch(result.url);
-          // setIpfsData(data);
+          setIpfsData(result.data);
         }
       } catch (err) {
         setError(err.message);
@@ -109,7 +108,7 @@ export default function ProductPage() {
         <Hash size={16} className="text-gray-600" />
         <div className="flex-1">
           <p className="text-xs text-gray-500 mb-1">Product Identifier</p>
-          <p className="font-mono text-sm break-all">{hash}</p>
+          <p className="font-mono text-black text-sm break-all">{hash}</p>
         </div>
       </motion.div>
 
@@ -181,13 +180,13 @@ export default function ProductPage() {
             className="grid grid-cols-1 md:grid-cols-2 gap-4 text-black"
             variants={containerVariants}
           >
-            {renderDetail(<Package size={18} />, "Product Name", ipfsData.productName)}
-            {renderDetail(<Tag size={18} />, "Serial Number", ipfsData.serialNumber)}
-            {renderDetail(<Hash size={18} />, "Batch Number", ipfsData.batchNumber)}
+            {renderDetail(<Package size={18} />, "Product Name", ipfsData.product_name)}
+            {renderDetail(<Tag size={18} />, "Serial Number", ipfsData.serial_number)}
+            {renderDetail(<Hash size={18} />, "Batch Number", ipfsData.batch_number)}
             {renderDetail(<MapPin size={18} />, "Location", ipfsData.location)}
             {renderDetail(<Calendar size={18} />, "Date", ipfsData.date)}
-            {renderDetail(<Tag size={18} />, "Price", ipfsData.price ? `$${ipfsData.price}` : null)}
-            {renderDetail(<Factory size={18} />, "Manufacturer", ipfsData.manufacturerName)}
+            {renderDetail(<Tag size={18} />, "Price", ipfsData.productPrice ? `$${ipfsData.productPrice}` : null)}
+            {renderDetail(<Factory size={18} />, "Manufacturer", ipfsData.man_name)}
             {renderDetail(<Clock size={18} />, "Timestamp", new Date(ipfsData.timestamp).toLocaleString())}
           </motion.div>
           

@@ -53,7 +53,7 @@ async function storeViaContract(client, metadataArray) {
         const segment = metadataArray.slice(i, i + 10);
         
         const storeProducts = new ContractExecuteTransaction()
-            .setContractId('0.0.6626523')
+            .setContractId(process.env.HEDERA_CONTRACT_ID)
             .setGas(270000)
             .setFunction("addProduct",
                 new ContractFunctionParameters()
