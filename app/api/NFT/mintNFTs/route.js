@@ -88,9 +88,9 @@ export async function POST(req) {
         const mintRx = await mintTxSubmit.getReceipt(client);
 
         console.log("Created NFT " + tokenId + " with serial number: " + mintRx.serials);
-        return NextResponse.json({ success: true, tokenId: tokenId });
+        return NextResponse.json({ success: true, tokenId: tokenId }, { status: 201 });
     } catch (err) {
         console.log(err);
-        return NextResponse.json({ success: false, error: err });
+        return NextResponse.json({ success: false, error: err }, { status: 500 });
     }
 }

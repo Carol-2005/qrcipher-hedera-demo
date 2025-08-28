@@ -74,7 +74,7 @@ export default function ProductForm() {
         setError(null);
     
         try {
-            const ipfsResponse = await fetch('/api/contract/generateProductQR', {
+            const ipfsResponse = await fetch('/api/product/generateProductQR', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

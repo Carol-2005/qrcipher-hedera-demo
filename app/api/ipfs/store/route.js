@@ -77,7 +77,7 @@ export async function POST(request) {
             location: `https://${process.env.BUCKET_NAME}.s3.filebase.com/${fileName}`,
             objectHash: objectHash,
             warning: !cid ? 'CID not available yet, may need to check later' : undefined
-        });
+        }, { status: 201 });
 
     } catch (error) {
         console.error('IPFS storage error:', error);

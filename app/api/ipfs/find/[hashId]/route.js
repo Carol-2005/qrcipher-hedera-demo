@@ -1,16 +1,16 @@
 import { NextResponse } from "next/server";
 
 export async function GET(request, { params }) {
-    const {hashId} = await params;
+    const { hashId } = await params;
     try{
         const dataResponse = await fetch(`https://ipfs.io/ipfs/${hashId}`);
         if (!dataResponse.ok) {
-            return NextResponse.json({ success: false, data: null })
+            return NextResponse.json({ success: false, data: null }, { status: 400 });
         }
         const productData = await dataResponse.json()
-        return NextResponse.json({ success: true, data: productData});
+        return NextResponse.json({ success: true, data: productData}, { status: 200 });
     } catch (error) {
         console.error(error);
-        return NextResponse.json({ success: false, error: error.message });
+        return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }
 }

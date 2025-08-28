@@ -44,9 +44,9 @@ export async function POST(req) {
             price: price
         });
 
-        return NextResponse.json({ success: true, id: productName });
+        return NextResponse.json({ success: true, id: productName }, { status: 200 });
     } catch (err) {
         console.log(err);
-        return NextResponse.json({ success: false, err: err });
+        return NextResponse.json({ success: false, err: err }, { status: 500 });
     }
 }

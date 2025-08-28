@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import Product from "@/model/Product";
-import mongoose from "mongoose";
 import { dbConnect } from "@/lib/connection";
 
 export async function GET(req) {
@@ -19,9 +18,9 @@ export async function GET(req) {
             productName: productDetails.name,
             location: productDetails.location,
             price: productDetails.price
-        })
+        }, { status: 200 });
     } catch (err) {
         console.log(err);
-        return NextResponse.json({ success: false });
+        return NextResponse.json({ success: false }, { status: 500 });
     }
 }

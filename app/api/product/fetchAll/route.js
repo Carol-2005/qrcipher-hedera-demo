@@ -8,12 +8,9 @@ export async function GET(req) {
         await dbConnect();
         const products = await Product.find({});
 
-        return NextResponse.json({ 
-            success: true, 
-            products: products
-        })
+        return NextResponse.json({ success: true, products: products}, { status: 200 });
     } catch (err) {
         console.log(err);
-        return NextResponse.json({ success: false });
+        return NextResponse.json({ success: false }, { status: 500 });
     }
 }
