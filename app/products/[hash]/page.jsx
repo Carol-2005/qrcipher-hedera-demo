@@ -18,7 +18,7 @@ export default function ProductPage() {
       try {
         setLoading(true);
         
-        const res = await fetch('/api/verifyCID', {
+        const res = await fetch('/api/contract/verifyCID', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ ipfsHash: hash }),
@@ -29,7 +29,7 @@ export default function ProductPage() {
         setIsValid(success);
 
         if (success) {
-          const ipfsResponse = await fetch(`/api/ipfs-url/${hash}`);
+          const ipfsResponse = await fetch(`/api/ipfs/find/${hash}`);
           const result = await ipfsResponse.json()
           if (!result.success) throw new Error('Failed to fetch data from IPFS');
           setIpfsData(result.data);

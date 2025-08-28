@@ -74,7 +74,7 @@ export default function ProductForm() {
         setError(null);
     
         try {
-            const ipfsResponse = await fetch('/api/createNFTsInBatches', {
+            const ipfsResponse = await fetch('/api/contract/generateProductQR', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

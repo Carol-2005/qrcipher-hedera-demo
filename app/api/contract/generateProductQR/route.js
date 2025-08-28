@@ -21,7 +21,7 @@ function chunkArray(array, size) {
 
 async function storeDataInIpfs(data) {
     try {
-        const ipfsResponse = await fetch('http://localhost:3000/api/ipfs-store', {
+        const ipfsResponse = await fetch('http://localhost:3000/api/ipfs/store', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data),
@@ -44,7 +44,7 @@ async function storeDataInIpfs(data) {
 
 async function storeHashOnBlockchain(ipfsHashArray, tokenId, supplyKey, tokenBasedFlag) {
     try {
-        const chainResponse = await axios.post('http://localhost:3000/api/blockchain-store', {
+        const chainResponse = await axios.post('http://localhost:3000/api/contract/blockchain-store', {
                 tokenIdStr: tokenId,
                 supplyKeyStr: supplyKey,
                 metadataArray: ipfsHashArray,
@@ -166,18 +166,18 @@ export async function POST(req) {
         const productDetails = await Product.findOne({
             name: productName
         });
-        console.log(productDetails)
+        console.log(productDetails);
 
         if (!productDetails) {
             console.log('Product not found')
-            return NextResponse.json({ success: false, err: 'Products not found' })
+            return NextResponse.json({ success: false, err: 'Products not found' }, { status: 404 });
         }
 
         const results = await processBatches(productData, manufacturerName, productDetails.tokenId, 
                                             productDetails.supplyKey, tokenBasedFlag);
-        return NextResponse.json({ success: true, ipfsHash: results[0].cid, url: results[0].url });
+        return NextResponse.json({ success: true, ipfsHash: results[0].cid, url: results[0].url }, { status: 201 });
     } catch (error) {
         console.log('Error');
-        return NextResponse.json({ success: false });
+        return NextResponse.json({ success: false }, { status: 500 });
     }
 }

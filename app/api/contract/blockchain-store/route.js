@@ -34,21 +34,6 @@ async function mintTokens(client, supplyKeyStr, tokenIdStr, metadataArray) {
 }
 
 async function storeViaContract(client, metadataArray) {
-    const newPrivateKey = await PrivateKey.generateECDSA();
-    const newPublicKey = await newPrivateKey.publicKey;
-
-    const transaction = new AccountCreateTransaction()
-        .setECDSAKeyWithAlias(newPublicKey)
-        .setInitialBalance(new Hbar(10));
-
-    const txResponse = await transaction.execute(client);
-    const receipt = await txResponse.getReceipt(client);
-    const newAccountId = receipt.accountId;
-    const evmAddress = `0x${newPublicKey.toEvmAddress()}`;
-
-    console.log(`\nHedera Account created: ${newAccountId}`);
-    console.log(`EVM Address: ${evmAddress}`);
-
     for (let i = 0; i < metadataArray.length; i += 10) {
         const segment = metadataArray.slice(i, i + 10);
         
