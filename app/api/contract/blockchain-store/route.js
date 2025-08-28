@@ -5,33 +5,33 @@ import {
 } from "@hashgraph/sdk";
 import environmentSetup from "@/lib/setup";
 
-async function mintTokens(client, supplyKeyStr, tokenIdStr, metadataArray) {
-    let serialNumbers = [];
-    const supplyKey = PrivateKey.fromStringDer(supplyKeyStr);
-    const tokenId = TokenId.fromString(tokenIdStr);
+// async function mintTokens(client, supplyKeyStr, tokenIdStr, metadataArray) {
+//     let serialNumbers = [];
+//     const supplyKey = PrivateKey.fromStringDer(supplyKeyStr);
+//     const tokenId = TokenId.fromString(tokenIdStr);
 
-    const maxTransactionFee = new Hbar(20);
+//     const maxTransactionFee = new Hbar(20);
         
-    for (let i = 0; i < metadataArray.length; i += 10) {
-        const segment = metadataArray.slice(i, i + 10);
-        const CID = segment.map(c => Buffer.from(c));
+//     for (let i = 0; i < metadataArray.length; i += 10) {
+//         const segment = metadataArray.slice(i, i + 10);
+//         const CID = segment.map(c => Buffer.from(c));
 
-        const mintTx = new TokenMintTransaction()
-            .setTokenId(tokenId)
-            .setMetadata(CID)
-            .setMaxTransactionFee(maxTransactionFee)
-            .freezeWith(client);
+//         const mintTx = new TokenMintTransaction()
+//             .setTokenId(tokenId)
+//             .setMetadata(CID)
+//             .setMaxTransactionFee(maxTransactionFee)
+//             .freezeWith(client);
 
-        const mintTxSign = await mintTx.sign(supplyKey);
-        const mintTxSubmit = await mintTxSign.execute(client);
-        const mintRx = await mintTxSubmit.getReceipt(client);
+//         const mintTxSign = await mintTx.sign(supplyKey);
+//         const mintTxSubmit = await mintTxSign.execute(client);
+//         const mintRx = await mintTxSubmit.getReceipt(client);
 
-        console.log("Created NFT " + tokenId + " with serial number: " + mintRx.serials);
-        serialNumbers.push(...mintRx.serials.map(s => s.toString()));
-    }
+//         console.log("Created NFT " + tokenId + " with serial number: " + mintRx.serials);
+//         serialNumbers.push(...mintRx.serials.map(s => s.toString()));
+//     }
 
-    return serialNumbers
-}
+//     return serialNumbers
+// }
 
 async function storeViaContract(client, metadataArray) {
     for (let i = 0; i < metadataArray.length; i += 10) {
@@ -61,13 +61,9 @@ export async function POST(req) {
         const client = await environmentSetup();
 
         const start = performance.now();
-
-        if (tokenBasedFlag) {
-            serialNumbers = await mintTokens(client, supplyKeyStr, tokenIdStr, metadataArray);
-        } else {
-            serialNumbers = await storeViaContract(client, metadataArray);
-        }
-
+        
+        serialNumbers = await storeViaContract(client, metadataArray);
+        
         const end = performance.now();
         console.log(`Time taken to store ${metadataArray.length} units - ${end - start}ms for ${tokenBasedFlag ? 'NFT':'Contracts'}`);
         
