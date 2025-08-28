@@ -1,19 +1,20 @@
-import AWS from 'aws-sdk';
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
+import { S3Client, PutObjectCommand, HeadObjectCommand } from '@aws-sdk/client-s3';
 
-const s3 = new AWS.S3({
+const s3 = new S3Client({
     endpoint: 'https://s3.filebase.com',
-    accessKeyId: process.env.FILEBASE_ACCESS_KEY,
-    secretAccessKey: process.env.FILEBASE_SECRET_KEY,
-    s3ForcePathStyle: true,
-    signatureVersion: 'v4'
+    region: 'us-east-1',
+    credentials: {
+        accessKeyId: process.env.FILEBASE_ACCESS_KEY,
+        secretAccessKey: process.env.FILEBASE_SECRET_KEY
+    },
+    forcePathStyle: true
 });
 
 function generateHashFromObject(obj) {
     const dataString = JSON.stringify(obj);
-    const hash = crypto.createHash('sha256').update(dataString, 'utf8').digest('hex');
-    return hash;
+    return crypto.createHash('sha256').update(dataString, 'utf8').digest('hex');
 }
 
 export async function POST(request) {
@@ -26,79 +27,74 @@ export async function POST(request) {
                 error: 'No data provided'
             }, { status: 400 });
         }
-        const objectHash = await generateHashFromObject(jsonData);
+
+        const objectHash = generateHashFromObject(jsonData);
         const fileName = `${objectHash}.json`;
         console.log(`Uploading file: ${fileName}`);
-        
-        const uploadParams = {
+
+        const putParams = {
             Bucket: process.env.BUCKET_NAME,
             Key: fileName,
             Body: JSON.stringify(jsonData, null, 2),
             ContentType: 'application/json'
         };
-        const uploadResult = await s3.upload(uploadParams).promise();
 
+        await s3.send(new PutObjectCommand(putParams));
         await new Promise(resolve => setTimeout(resolve, 100));
 
         const headParams = {
             Bucket: process.env.BUCKET_NAME,
             Key: fileName
         };
-        const headResult = await s3.headObject(headParams).promise();
-        
-        const cid = headResult.Metadata?.cid || 
-                headResult.Metadata?.['ipfs-hash'] || 
-                headResult.Metadata?.['x-amz-meta-cid'] ||
-                headResult.Metadata?.['x-amz-meta-ipfs-hash'];
-        
+
+        let headResult = await s3.send(new HeadObjectCommand(headParams));
+
+        let cid = headResult.Metadata?.cid ||
+                  headResult.Metadata?.['ipfs-hash'] ||
+                  headResult.Metadata?.['x-amz-meta-cid'] ||
+                  headResult.Metadata?.['x-amz-meta-ipfs-hash'];
+
         if (!cid) {
             console.warn('CID not found:', headResult.Metadata);
 
             await new Promise(resolve => setTimeout(resolve, 1000));
-            const retryHeadResult = await s3.headObject(headParams).promise();
-            const retryCid = retryHeadResult.Metadata?.cid || 
-                            retryHeadResult.Metadata?.['ipfs-hash'] || 
-                            retryHeadResult.Metadata?.['x-amz-meta-cid'] ||
-                            retryHeadResult.Metadata?.['x-amz-meta-ipfs-hash'];
-            
-            if (!retryCid) {
-                console.error('CID still not available after retry. Full metadata:', retryHeadResult.Metadata);
+
+            headResult = await s3.send(new HeadObjectCommand(headParams));
+            cid = headResult.Metadata?.cid ||
+                  headResult.Metadata?.['ipfs-hash'] ||
+                  headResult.Metadata?.['x-amz-meta-cid'] ||
+                  headResult.Metadata?.['x-amz-meta-ipfs-hash'];
+
+            if (!cid) {
+                console.error('CID still not available after retry. Full metadata:', headResult.Metadata);
             }
-            
-            return NextResponse.json({
-                success: true,
-                ipfsHash: retryCid || null,
-                fileName: fileName,
-                location: uploadResult.Location,
-                objectHash: objectHash,
-                warning: !retryCid ? 'CID not available yet, may need to check later' : undefined
-            });
         }
-        
+
         return NextResponse.json({
             success: true,
-            ipfsHash: cid,
+            ipfsHash: cid || null,
             fileName: fileName,
-            location: uploadResult.Location,
-            objectHash: objectHash
+            location: `https://${process.env.BUCKET_NAME}.s3.filebase.com/${fileName}`,
+            objectHash: objectHash,
+            warning: !cid ? 'CID not available yet, may need to check later' : undefined
         });
-        
+
     } catch (error) {
         console.error('IPFS storage error:', error);
-        
-        if (error.code === 'NoSuchBucket') {
+
+        if (error.name === 'NoSuchBucket') {
             return NextResponse.json({
                 success: false,
                 error: 'Bucket does not exist'
             }, { status: 400 });
         }
-        if (error.code === 'InvalidAccessKeyId') {
+        if (error.name === 'InvalidAccessKeyId') {
             return NextResponse.json({
                 success: false,
                 error: 'Invalid access credentials'
             }, { status: 401 });
         }
-        
-        return NextResponse.json({ success: false, error: error.message || 'Upload failed'}, { status: 500 });
+
+        return NextResponse.json({ success: false, error: error.message || 'Upload failed' }, { status: 500 });
     }
 }
