@@ -11,19 +11,18 @@ const productSchema = new mongoose.Schema({
     },
     supplyKey: {
         type: String,
-        required: true
     },
     tokenId: {
         type: String,
-        required: true
+    },
+    contractId: {
+        type: String
     },
     price: {
         type: Number,
         required: true
     }
-    }, {
-    timestamps: true
-});
+}, { timestamps: true });
 
 productSchema.index({name:1},{unique:true});
 export default mongoose.models.Product || mongoose.model("Product", productSchema);
