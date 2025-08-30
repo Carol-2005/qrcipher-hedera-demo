@@ -113,7 +113,7 @@ async function processBatches(productData, manufacturerName, tokenId, supplyKey,
         };
     });
 
-    const batchedTasks = chunkArray(tasks, 5);
+    const batchedTasks = chunkArray(tasks, 10);
     let results = [], metadataArray = [];
 
 
@@ -127,11 +127,17 @@ async function processBatches(productData, manufacturerName, tokenId, supplyKey,
         await sleep(300);
     }
 
-    const response = await storeHashOnBlockchain(metadataArray, tokenId, supplyKey, tokenBasedFlag);
+    const batchSize = 100;
+    const blockchainChunks = chunkArray(metadataArray, batchSize);
 
-    if (!response.success) {
-        console.log('Error while minting');
-    }
+    const blockchainTasks = blockchainChunks.map((batch, idx) =>
+        limit(async () => {
+            return await storeHashOnBlockchain(batch, tokenId, supplyKey, tokenBasedFlag);
+        })
+    );
+
+    const blockchainResults = await Promise.all(blockchainTasks);
+    console.log(blockchainResults);
 
     return results;
 }
