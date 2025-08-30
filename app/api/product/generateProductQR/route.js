@@ -21,7 +21,7 @@ function chunkArray(array, size) {
 
 async function storeDataInIpfs(data) {
     try {
-        const ipfsResponse = await fetch('http://localhost:3000/api/ipfs/store', {
+        const ipfsResponse = await fetch(`${process.env.PROD_URL}/api/ipfs/store`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data),
@@ -44,7 +44,7 @@ async function storeDataInIpfs(data) {
 
 async function storeHashOnBlockchain(ipfsHashArray, tokenId, supplyKey, tokenBasedFlag) {
     try {
-        const chainResponse = await axios.post('http://localhost:3000/api/contract/blockchain-store', {
+        const chainResponse = await axios.post(`${process.env.PROD_URL}/api/contract/blockchain-store`, {
                 tokenIdStr: tokenId,
                 supplyKeyStr: supplyKey,
                 metadataArray: ipfsHashArray,
@@ -105,7 +105,7 @@ async function processBatches(productData, manufacturerName, tokenId, supplyKey,
             }
 
             const ipfsHash = ipfsResponse.ipfsHash;
-            const productUrl = `https://www.qrcipher.in/products/${ipfsHash}`;
+            const productUrl = `${process.env.PROD_URL}/products/${ipfsHash}`;
             
             console.log(`IPFS CID for ${data.serial_number}: ${ipfsHash}`);
 
@@ -158,7 +158,7 @@ export async function POST(req) {
             tokenBasedFlag
         } = await req.json()
 
-        const unitsCreated = endSerialNumber - startSerial;
+        const unitsCreated = endSerialNumber - startSerial + 1;
         const productData = {
             productName,
             location,
@@ -181,6 +181,23 @@ export async function POST(req) {
 
         const results = await processBatches(productData, manufacturerName, productDetails.tokenId, 
                                             productDetails.supplyKey, tokenBasedFlag);
+        
+        if (!results || results.length < 1) {
+            throw new Error('No QRs created... Some Error Occured...');
+        }
+        if (results.length > 1) {
+            const response = await axios.post(`${process.env.PROD_URL}/api/product/generatePDF`, {
+                dataArray: results,
+                email: 'keithzidand@gmail.com'
+            });
+            const responseData = await response.data;
+
+            if (response.status !== 200) {
+                console.log(responseData.error);
+                throw new Error('PDF Generation Failed...');
+            }
+            return NextResponse.json({ success: true, ipfsHash: 'PDF sent to Your Email', url: 'Check Mail' }, { status: 201 })
+        }
         return NextResponse.json({ success: true, ipfsHash: results[0].cid, url: results[0].url }, { status: 201 });
     } catch (error) {
         console.log('Error');
