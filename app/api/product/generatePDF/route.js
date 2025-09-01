@@ -20,7 +20,7 @@ export async function POST(req) {
         console.log('PDF Generation Started.....');
         console.log("Number of Qrcodes: ", dataArray.length);
 
-        const regexPattern = /http:\/\/[^/]+\/products\/([^/]+)/;
+        const regexPattern = /https:\/\/[^/]+\/products\/([^/]+)/;
 
         for (let { data, url } of dataArray) {
             if (url == '') {
