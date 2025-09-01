@@ -23,7 +23,6 @@ export default function ProductForm() {
     const [error, setError] = useState(null);
     const [ipfsHash, setIpfsHash] = useState(null);
     const [txnHash, setTxnHash] = useState(null);
-    const [tokenBasedFlag, setTokenFlag] = useState(true);
 
     useEffect(() => {
 
@@ -64,10 +63,6 @@ export default function ProductForm() {
         }));
     };
 
-    const handleCheckboxChange = () => {
-        setTokenFlag(!tokenBasedFlag);
-    }
-
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsLoading(true);
@@ -88,7 +83,6 @@ export default function ProductForm() {
                     endSerialNumber: formData.endSerialNumber,
                     startSerial: formData.startSerialNumber,
                     manufacturerName: formData.manufacturerName,
-                    tokenBasedFlag: tokenBasedFlag
                 }),
             });
             
@@ -124,19 +118,6 @@ export default function ProductForm() {
                 </h2>
                 </div>
                 <div className="px-6 py-6">
-                    <label className='flex cursor-pointer select-none items-center text-black'>
-                        Create via Token: 
-                        <div className='relative'>
-                            <input
-                                type='checkbox'
-                                checked={tokenBasedFlag}
-                                onChange={handleCheckboxChange}
-                                className='sr-only'
-                            />
-                            <div className='block h-8 w-14 rounded-full bg-[#E5E7EB]'></div>
-                            <div className='dot absolute left-1 top-1 h-6 w-6 rounded-full bg-white transition'></div>
-                        </div>
-                    </label>
                 <form onSubmit={handleSubmit}>
                     <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
                     <div className="sm:col-span-2">

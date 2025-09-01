@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 import Product from '@/model/Product';
 import { dbConnect } from '@/lib/connection';
 
-const limit = pLimit(10);
+const limit = pLimit(30);
 let errorQRs = [];
 
 function sleep(ms) {
@@ -56,12 +56,10 @@ async function storeHashOnBlockchain(ipfsHashArray, tokenId, supplyKey, tokenBas
         if (chainResponse.status != 200) {
             return { success: false, errorMsg: "Failed to Store data on blockchain"}
         } 
-        console.log("Response From Blockchain")
-        
-        const chainData = await chainResponse.data;
-        console.log(chainData.serialNumber);
+        console.log("Response From Blockchain");
 
-        return {success: true, serials: chainData.serialNumber};
+        const chainData = await chainResponse.data;
+        return {success: true, runtime: chainData.runtime};
     } catch (error) {
         console.log(error);
         return { success: false, errorMsg: error.message };
@@ -113,7 +111,7 @@ async function processBatches(productData, manufacturerName, tokenId, supplyKey,
         };
     });
 
-    const batchedTasks = chunkArray(tasks, 10);
+    const batchedTasks = chunkArray(tasks, 30);
     let results = [], metadataArray = [];
 
 
@@ -139,7 +137,7 @@ async function processBatches(productData, manufacturerName, tokenId, supplyKey,
     const blockchainResults = await Promise.all(blockchainTasks);
     console.log(blockchainResults);
 
-    return results;
+    return {results: results, contractRuntime: blockchainResults?.runtime};
 }
 
 export async function POST(req) {
@@ -155,7 +153,6 @@ export async function POST(req) {
             endSerialNumber,
             startSerial,
             manufacturerName,
-            tokenBasedFlag
         } = await req.json()
 
         const unitsCreated = endSerialNumber - startSerial + 1;
@@ -169,19 +166,19 @@ export async function POST(req) {
             startSerial
         };
 
-        const productDetails = await Product.findOne({
-            name: productName
-        });
-        console.log(productDetails);
+        // const productDetails = await Product.findOne({
+        //     name: productName
+        // });
+        // console.log(productDetails);
 
-        if (!productDetails) {
-            console.log('Product not found')
-            return NextResponse.json({ success: false, err: 'Products not found' }, { status: 404 });
-        }
+        // if (!productDetails) {
+        //     console.log('Product not found')
+        //     return NextResponse.json({ success: false, err: 'Products not found' }, { status: 404 });
+        // }
 
-        const results = await processBatches(productData, manufacturerName, productDetails.tokenId, 
-                                            productDetails.supplyKey, tokenBasedFlag);
-        
+        const processResponse = await processBatches(productData, manufacturerName, '', '', false);
+        const results = processResponse.results;
+
         if (!results || results.length < 1) {
             throw new Error('No QRs created... Some Error Occured...');
         }
@@ -196,11 +193,16 @@ export async function POST(req) {
                 console.log(responseData.error);
                 throw new Error('PDF Generation Failed...');
             }
-            return NextResponse.json({ success: true, ipfsHash: 'PDF sent to Your Email', url: 'Check Mail' }, { status: 201 })
+            return NextResponse.json({
+                success: true, ipfsHash: 'PDF sent to Your Email', url: 'Check Mail', runtime: processResponse.results,
+                numQRcodes: results.length
+            }, { status: 201 });
         }
-        return NextResponse.json({ success: true, ipfsHash: results[0].cid, url: results[0].url }, { status: 201 });
+        return NextResponse.json({ 
+            success: true, ipfsHash: results[0].cid, url: results[0].url, runtime: processResponse.results 
+        }, { status: 201 });
     } catch (error) {
-        console.log('Error');
+        console.log(error);
         return NextResponse.json({ success: false }, { status: 500 });
     }
 }

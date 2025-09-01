@@ -65,9 +65,9 @@ export async function POST(req) {
         serialNumbers = await storeViaContract(client, metadataArray);
         
         const end = performance.now();
-        console.log(`Time taken to store ${metadataArray.length} units - ${end - start}ms for ${tokenBasedFlag ? 'NFT':'Contracts'}`);
+        console.log(`Time taken to store ${metadataArray.length} units - ${end - start}ms`);
         
-        return NextResponse.json({ success: true, serialNumbers: serialNumbers }, { status: 200 });
+        return NextResponse.json({ success: true, runtime: (end - start) }, { status: 200 });
     } catch (err) {
         console.log(err);
         return NextResponse.json({ success: false, error: err }, { status: 500 });
