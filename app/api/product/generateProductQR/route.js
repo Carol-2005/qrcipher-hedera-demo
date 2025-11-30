@@ -42,13 +42,12 @@ async function storeDataInIpfs(data) {
     }
 }
 
-async function storeHashOnBlockchain(ipfsHashArray, tokenId, supplyKey, tokenBasedFlag) {
+async function storeHashOnBlockchain(ipfsHashArray, contractId) {
     try {
+        console.log(contractId);
         const chainResponse = await axios.post(`${process.env.PROD_URL}/api/contract/blockchain-store`, {
-                tokenIdStr: tokenId,
-                supplyKeyStr: supplyKey,
+                contractId: contractId,
                 metadataArray: ipfsHashArray,
-                tokenBasedFlag: tokenBasedFlag
             }, {
                 timeout: 18000000
         });
@@ -66,7 +65,7 @@ async function storeHashOnBlockchain(ipfsHashArray, tokenId, supplyKey, tokenBas
     }
 }
 
-async function processBatches(productData, manufacturerName, tokenId, supplyKey, tokenBasedFlag) {
+async function processBatches(productData, manufacturerName, contractId, tokenBasedFlag) {
     console.log("The processBatches function is hit");
 
     const {
@@ -130,7 +129,7 @@ async function processBatches(productData, manufacturerName, tokenId, supplyKey,
 
     const blockchainTasks = blockchainChunks.map((batch, idx) =>
         limit(async () => {
-            return await storeHashOnBlockchain(batch, tokenId, supplyKey, tokenBasedFlag);
+            return await storeHashOnBlockchain(batch, contractId);
         })
     );
 
@@ -166,17 +165,18 @@ export async function POST(req) {
             startSerial
         };
 
-        // const productDetails = await Product.findOne({
-        //     name: productName
-        // });
-        // console.log(productDetails);
+        const productDetails = await Product.findOne({
+            name: productName
+        });
+        console.log(productDetails);
 
-        // if (!productDetails) {
-        //     console.log('Product not found')
-        //     return NextResponse.json({ success: false, err: 'Products not found' }, { status: 404 });
-        // }
+        if (!productDetails) {
+            console.log('Product not found')
+            return NextResponse.json({ success: false, err: 'Products not found' }, { status: 404 });
+        }
 
-        const processResponse = await processBatches(productData, manufacturerName, '', '', false);
+        console.log(productDetails.contractId);
+        const processResponse = await processBatches(productData, manufacturerName, productDetails.contractId, false);
         const results = processResponse.results;
 
         if (!results || results.length < 1) {

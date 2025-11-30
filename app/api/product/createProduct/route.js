@@ -7,28 +7,28 @@ export async function POST(req) {
 
     try {
         const { productName, price, location } = await req.json();
-        if (tokenBasedFlag) {
-            const response = await fetch('http:localhost:3000/api/NFT/createNFT', {
-                method: 'POST',
-                body: {
-                    productName: productName
-                }
-            });
+        // if (tokenBasedFlag) {
+        //     const response = await fetch('http:localhost:3000/api/NFT/createNFT', {
+        //         method: 'POST',
+        //         body: {
+        //             productName: productName
+        //         }
+        //     });
 
-            if (!response.ok) {
-                throw new Error('Token Creation Failed');
-            }
-            const { supplyKey, tokenId } = await response.json();
+        //     if (!response.ok) {
+        //         throw new Error('Token Creation Failed');
+        //     }
+        //     const { supplyKey, tokenId } = await response.json();
 
-            await Product.insertOne({
-                name: productName,
-                location: location,
-                supplyKey: supplyKey.toStringDer(),
-                tokenId: tokenId.toString(),
-                price: price
-            });
-        } else {
-            const response = await fetch('http:localhost:3000/api/contract/deploy-contract', {
+        //     await Product.insertOne({
+        //       tokenId: tokenId.toString(),
+        //           name: productName,
+        //         location: location,
+        //         supplyKey: supplyKey.toStringDer(),
+        //         price: price
+        //     });
+        // }
+            const response = await fetch(`${process.env.PROD_URL}/api/contract/deploy-contract`, {
                 method: 'GET'
             });
 
@@ -40,10 +40,9 @@ export async function POST(req) {
             await Product.insertOne({
                 name: productName,
                 location: location,
-                supplyKey: contractId.toEvmAddress(),
+                contractId: contractId,
                 price: price
             })
-        }
 
         return NextResponse.json({ success: true, id: productName }, { status: 200 });
     } catch (err) {

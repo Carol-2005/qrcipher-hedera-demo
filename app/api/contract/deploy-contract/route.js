@@ -27,14 +27,15 @@ export async function GET(req) {
             body
         })
         .then(response => {
-            return response.json()
+            return response.json();
         })
         .catch(error => {
-            console.log(error)
-            throw new Error('Verification Falied')
+            console.log(error);
+            throw new Error('Verification Falied');
         });
 
-        return NextResponse.json({ success: true, contractId: contractId }, { status: 201 });
+        return NextResponse.json({ success: true, contractId: `${contractId.realm}.${contractId.shard}.${contractId.num}` }, 
+            { status: 201 });
     } catch (err) {
         console.log(err);
         return NextResponse.json({ success: false, error: err }, { status: 500 });

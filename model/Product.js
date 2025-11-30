@@ -9,12 +9,6 @@ const productSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    supplyKey: {
-        type: String,
-    },
-    tokenId: {
-        type: String,
-    },
     contractId: {
         type: String
     },
