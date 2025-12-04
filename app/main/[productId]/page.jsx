@@ -89,8 +89,10 @@ export default function ProductForm() {
             if (!ipfsResponse.ok) {
                 throw new Error('Failed to store data on IPFS');
             }
+            console.log("The ipfs response is",ipfsResponse);
             
             const ipfsData = await ipfsResponse.json();
+            console.log("The ipfs data is",ipfsData);
             setResponse(ipfsData);
         } catch (err) {
             setError(err.message);

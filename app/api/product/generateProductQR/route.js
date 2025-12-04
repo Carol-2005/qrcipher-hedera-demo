@@ -185,7 +185,7 @@ export async function POST(req) {
         if (results.length > 1) {
             const response = await axios.post(`${process.env.PROD_URL}/api/product/generatePDF`, {
                 dataArray: results,
-                email: 'keithzidand@gmail.com'
+                email: 'carol.lobo2005@gmail.com'
             });
             const responseData = await response.data;
 
