@@ -12,16 +12,21 @@ export default function ProductPage() {
   const [ipfsData, setIpfsData] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
-
+  
   useEffect(() => {
     const verifyAndFetch = async () => {
       try {
         setLoading(true);
-        
+        const ipfsResponse = await fetch(`/api/ipfs/find/${hash}`);
+          const result = await ipfsResponse.json()
+          console.log("The result on verify product page is",result);
+          const productData=result.data;
+          console.log("The product data is",productData);
+          //here you need to get the contract id and pass it to the verifyCID api
         const res = await fetch('/api/contract/verifyCID', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ipfsHash: hash }),
+          body: JSON.stringify({ ipfsHash: hash, contractId: productData.contractId }),
         });
 
         if (!res.ok) throw new Error('Verification failed');
@@ -29,10 +34,10 @@ export default function ProductPage() {
         setIsValid(success);
 
         if (success) {
-          const ipfsResponse = await fetch(`/api/ipfs/find/${hash}`);
-          const result = await ipfsResponse.json()
-          if (!result.success) throw new Error('Failed to fetch data from IPFS');
-          setIpfsData(result.data);
+          // const ipfsResponse = await fetch(`/api/ipfs/find/${hash}`);
+          // const result = await ipfsResponse.json()
+          // if (!result.success) throw new Error('Failed to fetch data from IPFS');
+          setIpfsData(productData);
         }
       } catch (err) {
         setError(err.message);

@@ -91,6 +91,7 @@ async function processBatches(productData, manufacturerName, contractId, tokenBa
             serial_number: serialNumber,
             weight: '12',
             man_name: manufacturerName,
+            contractId,
         };
 
         return async () => {

@@ -5,11 +5,11 @@ import { NextResponse } from "next/server";
 export async function POST(request) {
     try {
         const client = await environmentSetup();
-        const { ipfsHash } = await request.json();
-
+        const { ipfsHash,contractId } = await request.json();
+        
         const params = new ContractFunctionParameters().addString(ipfsHash);
         const contractCallQuery = new ContractCallQuery()
-            .setContractId(process.env.HEDERA_CONTRACT_ID)
+            .setContractId(contractId)
             .setGas(100000)
             .setFunction("checkProduct", params);
 
