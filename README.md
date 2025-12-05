@@ -180,7 +180,7 @@ Each product is represented by its own smart contract, and every batch is upload
 
 ```bash
 # Clone the repository
-git clone <your-repo-url>
+git clone https://github.com/Carol-2005/qrcipher-hedera-demo.git
 cd supply-chain-tracker
 
 # Install dependencies
